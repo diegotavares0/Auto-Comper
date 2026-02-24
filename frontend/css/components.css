@@ -859,6 +859,160 @@ input[type="range"]::-moz-range-thumb {
     color: var(--red);
 }
 
+/* ── Structure Tab ── */
+
+.btn-struct {
+    background: var(--purple);
+    color: #fff;
+}
+.btn-struct:hover:not(:disabled) {
+    background: #b890ff;
+}
+.btn-struct:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.struct-bar {
+    background: linear-gradient(90deg, var(--purple), #c0a0ff) !important;
+}
+
+.struct-summary {
+    font-size: 0.82em;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Section timeline — colored blocks on a horizontal bar */
+.struct-timeline {
+    display: flex;
+    height: 36px;
+    border-radius: var(--r);
+    overflow: hidden;
+    gap: 1px;
+    margin-bottom: 16px;
+    background: var(--bg-input);
+}
+
+.struct-timeline-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: 600;
+    color: #fff;
+    min-width: 20px;
+    cursor: default;
+    transition: opacity 0.15s;
+    position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 4px;
+}
+
+.struct-timeline-segment:hover {
+    opacity: 0.85;
+}
+
+/* Section list — editable rows */
+.struct-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.struct-section-row {
+    display: grid;
+    grid-template-columns: 12px 1fr 100px 80px;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border-radius: var(--r);
+    font-size: 0.85em;
+}
+
+.struct-section-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.struct-section-label {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 3px 6px;
+    color: var(--text);
+    font-size: 0.95em;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+
+.struct-section-label:hover {
+    border-color: var(--border);
+}
+
+.struct-section-label:focus {
+    border-color: var(--purple);
+    background: var(--bg-card);
+}
+
+.struct-section-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    text-align: right;
+}
+
+.struct-section-group {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    color: var(--text-dim);
+    text-align: center;
+    background: var(--bg-card);
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
+/* Action buttons row */
+.struct-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.struct-actions .btn {
+    flex: 1;
+}
+
+.struct-actions .btn-outline {
+    flex: 0 0 auto;
+    width: auto;
+    margin-top: 0;
+    padding: 12px 20px;
+}
+
+/* Confirmed badge */
+.struct-confirmed-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(168, 124, 255, 0.1);
+    border: 1px solid var(--purple);
+    border-radius: var(--r);
+    color: var(--purple);
+    font-size: 0.85em;
+    font-weight: 500;
+    margin-top: 12px;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 600px) {

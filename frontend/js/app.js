@@ -11,6 +11,7 @@ const App = {
         Comping.init();
         Tuning.init();
         Presets.init();
+        Structure.init();
 
         // Wire upload → comping button state
         Upload.onChange((files) => {

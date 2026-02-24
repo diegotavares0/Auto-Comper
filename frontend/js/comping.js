@@ -98,6 +98,12 @@ const Comping = {
             fd.append(key, val);
         }
 
+        // Include confirmed structure sections if available
+        const structSections = Structure.getConfirmedSections();
+        if (structSections) {
+            fd.append('structure_sections', JSON.stringify(structSections));
+        }
+
         try {
             // POST to /api/comp — returns immediately with task_id
             const data = await API.post('/api/comp', fd);

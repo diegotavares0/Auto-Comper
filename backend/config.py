@@ -37,6 +37,9 @@ class CompRules:
     # Structure (user-defined sections from Structure tab)
     custom_sections: Optional[List[Dict]] = None
 
+    # Structure-aware comping (sections confirmed from Structure tab)
+    structure_sections: Optional[List[Dict]] = None
+
     # Auto-trim
     auto_trim_enabled: bool = True
     trim_silence_threshold_db: float = -45.0

@@ -131,13 +131,23 @@ def create_app() -> Flask:
             rules.min_improvement_to_switch = float(request.form.get("min_improvement", 0.08))
             rules.max_takes_in_comp = int(request.form.get("max_takes", 4))
 
-            # Custom sections from Structure tab
+            # Custom sections from Structure tab (manual block boundaries)
             custom_sec = request.form.get("custom_sections", "")
             if custom_sec:
                 try:
                     rules.custom_sections = json.loads(custom_sec)
                 except Exception:
                     rules.custom_sections = None
+
+            # Structure-aware sections (from Structure detection tab)
+            struct_sec = request.form.get("structure_sections", "")
+            if struct_sec:
+                try:
+                    rules.structure_sections = json.loads(struct_sec)
+                    # Auto-switch to structure mode when sections are provided
+                    rules.segment_method = "structure"
+                except Exception:
+                    rules.structure_sections = None
 
             # Load takes
             sr = rules.sample_rate
@@ -418,15 +428,66 @@ def create_app() -> Flask:
             traceback.print_exc()
             return jsonify({"error": str(e), "task_id": task_id}), 500
 
-    # --- Structure API (placeholder for Sprint 3) ---
+    # --- Structure API ---
 
     @app.route("/api/structure/detect", methods=["POST"])
     def structure_detect():
-        return jsonify({"error": "Deteccao de estrutura sera implementada no Sprint 3"}), 501
+        """Detect musical structure from a single audio file."""
+        from backend.structure.analyzer import analyze_structure
 
-    @app.route("/api/structure/propagate", methods=["POST"])
-    def structure_propagate():
-        return jsonify({"error": "Propagacao de estrutura sera implementada no Sprint 4"}), 501
+        task_id = str(uuid.uuid4())[:8]
+        progress_manager.start(task_id, "Recebendo arquivo...")
+
+        try:
+            file = request.files.get("file")
+            if not file:
+                return jsonify({"error": "Arquivo de audio necessario"}), 400
+
+            # Save uploaded file
+            tmp_dir = tempfile.mkdtemp(prefix="structure_")
+            fpath = os.path.join(tmp_dir, file.filename)
+            file.save(fpath)
+
+            # Load audio
+            sr = 48000
+            audio = load_audio_file(fpath, sr)
+
+            # Run structure detection in background thread
+            def run():
+                try:
+                    callback = progress_manager.make_callback(task_id)
+                    result = analyze_structure(audio, sr, progress_cb=callback)
+
+                    with _results_lock:
+                        _task_results[task_id] = {
+                            "filename": "",
+                            "report": result,
+                        }
+
+                    n_sec = result.get("n_sections", 0)
+                    progress_manager.complete(
+                        task_id,
+                        f"Estrutura detectada: {n_sec} secoes!"
+                    )
+
+                except Exception as e:
+                    traceback.print_exc()
+                    with _results_lock:
+                        _task_results[task_id] = {"error": str(e)}
+                    progress_manager.error(task_id, str(e))
+
+                finally:
+                    shutil.rmtree(tmp_dir, ignore_errors=True)
+
+            thread = threading.Thread(target=run, daemon=True)
+            thread.start()
+
+            return jsonify({"task_id": task_id})
+
+        except Exception as e:
+            progress_manager.error(task_id, str(e))
+            traceback.print_exc()
+            return jsonify({"error": str(e), "task_id": task_id}), 500
 
     # --- Trim API (placeholder for Sprint 2) ---
 
