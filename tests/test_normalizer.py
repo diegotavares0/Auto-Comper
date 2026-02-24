@@ -202,7 +202,7 @@ def test_normalize_takes_integration():
         print(f"    Take {i+1}: {bpm} BPM, {hz:.1f} Hz")
 
     # Run full normalization
-    normalized = normalize_takes(
+    normalized, norm_stats = normalize_takes(
         takes, sr,
         tempo_intensity=80,
         pitch_intensity=80,
@@ -215,6 +215,21 @@ def test_normalize_takes_integration():
         assert len(n) > 0, f"Take {i+1} should not be empty"
         assert not np.any(np.isnan(n)), f"Take {i+1} should not have NaN"
         assert np.max(np.abs(n)) < 10.0, f"Take {i+1} should not clip badly"
+
+    # Verify normalization stats are returned
+    assert norm_stats is not None, "Should return normalization stats"
+    assert norm_stats["enabled"] is True
+    assert norm_stats["tempo_intensity"] == 80
+    assert norm_stats["pitch_intensity"] == 80
+    assert norm_stats["target_bpm"] is not None
+    assert norm_stats["target_hz"] is not None
+    assert len(norm_stats["per_take"]) == len(takes)
+
+    print(f"  Stats: target BPM={norm_stats['target_bpm']}, "
+          f"target Hz={norm_stats['target_hz']}")
+    for pt in norm_stats["per_take"]:
+        print(f"    Take {pt['take']}: {pt.get('original_bpm','?')} BPM, "
+              f"shift={pt.get('pitch_shift_cents','?')} cents")
 
     print("  [PASS] normalize_takes() integration works")
 
@@ -230,10 +245,11 @@ def test_skip_when_disabled():
     ]
 
     original_lengths = [len(t) for t in takes]
-    result = normalize_takes(takes, sr, tempo_intensity=0, pitch_intensity=0)
+    result, stats = normalize_takes(takes, sr, tempo_intensity=0, pitch_intensity=0)
 
     # Should be the exact same objects (no processing)
     assert result is takes, "Zero intensity should return the same list (no copy)"
+    assert stats is None, "Zero intensity should return None stats"
     for i, t in enumerate(result):
         assert len(t) == original_lengths[i], "Audio length should be unchanged"
 

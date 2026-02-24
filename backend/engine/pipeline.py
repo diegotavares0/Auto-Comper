@@ -85,10 +85,11 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
                  f"{f' ({len(dropped)} descartados)' if dropped else ''}")
 
     # Phase 0.5: Tempo/Pitch Normalization (if enabled)
+    norm_stats = None
     if rules.tempo_normalize_intensity > 0 or rules.pitch_center_intensity > 0:
         from backend.engine.normalizer import normalize_takes
         progress(16, "Normalizando tempo e pitch...")
-        takes = normalize_takes(
+        takes, norm_stats = normalize_takes(
             takes, sr,
             tempo_intensity=rules.tempo_normalize_intensity,
             pitch_intensity=rules.pitch_center_intensity,
@@ -164,6 +165,10 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
         "avg_score": round(np.mean([d["score"] for d in decisions]), 3),
     }
 
+    # Include normalization stats if normalization was applied
+    if norm_stats:
+        report["normalization"] = norm_stats
+
     progress(100, f"Comp finalizado! Base: Take {best_take.take_idx + 1}, "
                   f"{len(take_usage)} takes usados, {switches} trocas")
 
@@ -205,10 +210,11 @@ def _run_structure_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
     progress(5, f"Take de referencia: {ref_idx + 1} ({ref_duration:.1f}s)")
 
     # ── Step 1.5: Tempo/Pitch Normalization (if enabled) ──
+    norm_stats = None
     if rules.tempo_normalize_intensity > 0 or rules.pitch_center_intensity > 0:
         from backend.engine.normalizer import normalize_takes
         progress(6, "Normalizando tempo e pitch...")
-        takes = normalize_takes(
+        takes, norm_stats = normalize_takes(
             takes, sr,
             tempo_intensity=rules.tempo_normalize_intensity,
             pitch_intensity=rules.pitch_center_intensity,
@@ -452,6 +458,10 @@ def _run_structure_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
             for s in sections
         ],
     }
+
+    # Include normalization stats if normalization was applied
+    if norm_stats:
+        report["normalization"] = norm_stats
 
     progress(100, f"Comp (estrutura) finalizado! "
                   f"{covered_sections}/{n_sections} secoes, "

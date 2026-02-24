@@ -229,7 +229,7 @@ def normalize_takes(
     """
     # Skip entirely if both intensities are zero
     if tempo_intensity <= 0 and pitch_intensity <= 0:
-        return takes
+        return takes, None
 
     n = len(takes)
 
@@ -285,18 +285,43 @@ def normalize_takes(
 
         normalized.append(result)
 
-    # ── Summary ──
+    # ── Summary & Stats ──
+    norm_stats = {
+        "enabled": True,
+        "tempo_intensity": tempo_intensity,
+        "pitch_intensity": pitch_intensity,
+        "target_bpm": round(target_bpm, 1) if target_bpm > 0 else None,
+        "target_hz": round(target_hz, 1) if target_hz > 0 else None,
+        "per_take": [],
+    }
+
+    for i in range(n):
+        take_info = {"take": i + 1}
+        if tempo_intensity > 0 and tempos[i] > 0:
+            take_info["original_bpm"] = round(tempos[i], 1)
+            take_info["bpm_correction"] = round(target_bpm - tempos[i], 1) if target_bpm > 0 else 0
+        if pitch_intensity > 0 and pitches[i] > 0:
+            take_info["original_hz"] = round(pitches[i], 1)
+            if target_hz > 0:
+                take_info["pitch_shift_cents"] = round(
+                    1200 * np.log2(target_hz / pitches[i]), 1
+                )
+            else:
+                take_info["pitch_shift_cents"] = 0
+        norm_stats["per_take"].append(take_info)
+
     if tempo_intensity > 0 and valid_tempos:
         spread_before = max(valid_tempos) - min(valid_tempos)
+        norm_stats["tempo_spread_bpm"] = round(spread_before, 1)
         log.info(f"  Tempo spread before: {spread_before:.1f} BPM "
                  f"(correction intensity: {tempo_intensity}%)")
 
     if pitch_intensity > 0 and valid_pitches:
-        # Spread in cents
         spread_cents = 1200 * np.log2(max(valid_pitches) / min(valid_pitches))
+        norm_stats["pitch_spread_cents"] = round(spread_cents, 1)
         log.info(f"  Pitch spread before: {spread_cents:.1f} cents "
                  f"(correction intensity: {pitch_intensity}%)")
 
     progress(23, "Normalizacao concluida")
 
-    return normalized
+    return normalized, norm_stats

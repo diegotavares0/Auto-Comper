@@ -298,6 +298,16 @@ const Comping = {
             statsEl.appendChild(box);
         }
 
+        // Normalization stats
+        const normEl = Utils.$('#result-norm');
+        normEl.innerHTML = '';
+        if (report.normalization && report.normalization.enabled) {
+            this.renderNormStats(normEl, report.normalization);
+            normEl.style.display = '';
+        } else {
+            normEl.style.display = 'none';
+        }
+
         // Usage bar
         const usageEl = Utils.$('#result-usage');
         usageEl.innerHTML = '';
@@ -360,6 +370,69 @@ const Comping = {
                 row.append(blk, takeBadge, score, time, switchBadge);
                 decisionsEl.appendChild(row);
             }
+        }
+    },
+
+    /**
+     * Render normalization stats section in the comp report.
+     */
+    renderNormStats(container, norm) {
+        const title = Utils.el('div', 'config-section-title', 'Normalizacao aplicada');
+        container.appendChild(title);
+
+        // Summary line
+        const parts = [];
+        if (norm.target_bpm) parts.push(`Tempo alvo: ${norm.target_bpm} BPM (${norm.tempo_intensity}%)`);
+        if (norm.target_hz)  parts.push(`Pitch alvo: ${norm.target_hz} Hz (${norm.pitch_intensity}%)`);
+        if (norm.tempo_spread_bpm !== undefined) parts.push(`Spread: ${norm.tempo_spread_bpm} BPM`);
+        if (norm.pitch_spread_cents !== undefined) parts.push(`Spread: ${norm.pitch_spread_cents} cents`);
+
+        if (parts.length) {
+            const summary = Utils.el('div', 'norm-summary', parts.join(' · '));
+            container.appendChild(summary);
+        }
+
+        // Per-take table
+        if (norm.per_take && norm.per_take.length > 0) {
+            const details = document.createElement('details');
+            details.className = 'decisions-details';
+            const sum = document.createElement('summary');
+            sum.textContent = 'Correcoes por take';
+            details.appendChild(sum);
+
+            const table = Utils.el('div', 'norm-table');
+
+            // Header
+            const header = Utils.el('div', 'norm-row header');
+            header.innerHTML = '<span>Take</span><span>BPM original</span><span>Correcao BPM</span><span>Shift (cents)</span>';
+            table.appendChild(header);
+
+            for (const pt of norm.per_take) {
+                const row = Utils.el('div', 'norm-row');
+
+                const take = Utils.el('span', 'take-badge', `Take ${pt.take}`);
+                take.style.background = Utils.takeColor(pt.take - 1);
+
+                const bpm = Utils.el('span', '', pt.original_bpm ? `${pt.original_bpm}` : '-');
+                const correction = Utils.el('span', '',
+                    pt.bpm_correction !== undefined ? (pt.bpm_correction > 0 ? `+${pt.bpm_correction}` : `${pt.bpm_correction}`) : '-');
+                const cents = Utils.el('span', '',
+                    pt.pitch_shift_cents !== undefined ? (pt.pitch_shift_cents > 0 ? `+${pt.pitch_shift_cents}` : `${pt.pitch_shift_cents}`) : '-');
+
+                // Color code significant corrections
+                if (pt.bpm_correction && Math.abs(pt.bpm_correction) > 2) {
+                    correction.style.color = 'var(--orange)';
+                }
+                if (pt.pitch_shift_cents && Math.abs(pt.pitch_shift_cents) > 15) {
+                    cents.style.color = 'var(--orange)';
+                }
+
+                row.append(take, bpm, correction, cents);
+                table.appendChild(row);
+            }
+
+            details.appendChild(table);
+            container.appendChild(details);
         }
     },
 };
