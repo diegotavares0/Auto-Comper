@@ -69,6 +69,7 @@ const Comping = {
             switch_penalty: Utils.$('#cfg-switch-penalty').value,
             min_improvement: Utils.$('#cfg-min-improvement').value,
             max_takes: Utils.$('#cfg-max-takes').value,
+            auto_trim: Utils.$('#cfg-auto-trim').checked ? 'true' : 'false',
             tempo_normalize_intensity: Utils.$('#cfg-tempo-norm').value,
             pitch_center_intensity: Utils.$('#cfg-pitch-center').value,
         };

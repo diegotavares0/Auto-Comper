@@ -131,6 +131,10 @@ def create_app() -> Flask:
             rules.min_improvement_to_switch = float(request.form.get("min_improvement", 0.08))
             rules.max_takes_in_comp = int(request.form.get("max_takes", 4))
 
+            # Auto-trim
+            rules.auto_trim_enabled = request.form.get(
+                "auto_trim", "true").lower() == "true"
+
             # Tempo/Pitch normalization
             rules.tempo_normalize_intensity = float(
                 request.form.get("tempo_normalize_intensity", 0))
@@ -495,11 +499,39 @@ def create_app() -> Flask:
             traceback.print_exc()
             return jsonify({"error": str(e), "task_id": task_id}), 500
 
-    # --- Trim API (placeholder for Sprint 2) ---
+    # --- Trim API ---
 
     @app.route("/api/trim", methods=["POST"])
     def trim():
-        return jsonify({"error": "Auto-trim sera implementado no Sprint 2"}), 501
+        """Trim silence from uploaded audio file (standalone endpoint)."""
+        from backend.engine.trimmer import trim_audio
+
+        try:
+            file = request.files.get("file")
+            if not file:
+                return jsonify({"error": "Arquivo necessario"}), 400
+
+            tmp_dir = tempfile.mkdtemp(prefix="trim_")
+            fpath = os.path.join(tmp_dir, file.filename)
+            file.save(fpath)
+
+            sr = 48000
+            audio = load_audio_file(fpath, sr)
+
+            threshold = float(request.form.get("threshold_db", -45.0))
+            trimmed, info = trim_audio(audio, sr, threshold_db=threshold)
+
+            if info["trimmed"]:
+                out_name = f"trim_{str(uuid.uuid4())[:8]}.wav"
+                save_audio(os.path.join(OUTPUT_DIR, out_name), trimmed, sr)
+                info["filename"] = out_name
+
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            return jsonify(info)
+
+        except Exception as e:
+            traceback.print_exc()
+            return jsonify({"error": str(e)}), 500
 
     # Cleanup on shutdown
     import atexit

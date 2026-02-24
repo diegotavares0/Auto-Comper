@@ -47,7 +47,19 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
         log.info(f"[{pct}%] {msg}")
 
     n_takes = len(takes)
-    progress(5, f"Carregando {n_takes} takes...")
+    progress(2, f"Carregando {n_takes} takes...")
+
+    # Phase -1: Auto-trim silence from start/end of each take
+    trim_infos = None
+    if rules.auto_trim_enabled:
+        from backend.engine.trimmer import trim_takes
+        progress(3, "Auto-trim: removendo silencio...")
+        takes, trim_infos = trim_takes(
+            takes, sr,
+            threshold_db=rules.trim_silence_threshold_db,
+            min_music_duration_s=rules.trim_min_music_duration_s,
+            progress_cb=progress,
+        )
 
     # Phase 0: Align
     if rules.use_alignment and n_takes > 1:
@@ -169,6 +181,18 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
     if norm_stats:
         report["normalization"] = norm_stats
 
+    # Include auto-trim stats if trimming was applied
+    if trim_infos:
+        trimmed_count = sum(1 for t in trim_infos if t["trimmed"])
+        total_removed = sum(t["removed_start_s"] + t["removed_end_s"]
+                            for t in trim_infos)
+        report["auto_trim"] = {
+            "enabled": True,
+            "takes_trimmed": trimmed_count,
+            "total_removed_s": round(total_removed, 2),
+            "per_take": trim_infos,
+        }
+
     progress(100, f"Comp finalizado! Base: Take {best_take.take_idx + 1}, "
                   f"{len(take_usage)} takes usados, {switches} trocas")
 
@@ -198,6 +222,18 @@ def _run_structure_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
 
     n_takes = len(takes)
     progress(2, f"Estrutura: {n_takes} takes recebidos")
+
+    # ── Step 0: Auto-trim silence from start/end of each take ──
+    trim_infos = None
+    if rules.auto_trim_enabled:
+        from backend.engine.trimmer import trim_takes
+        progress(3, "Auto-trim: removendo silencio...")
+        takes, trim_infos = trim_takes(
+            takes, sr,
+            threshold_db=rules.trim_silence_threshold_db,
+            min_music_duration_s=rules.trim_min_music_duration_s,
+            progress_cb=progress,
+        )
 
     # ── Step 1: Find the longest take as reference ──
     # (longest take most likely has the full song structure)
@@ -462,6 +498,18 @@ def _run_structure_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
     # Include normalization stats if normalization was applied
     if norm_stats:
         report["normalization"] = norm_stats
+
+    # Include auto-trim stats if trimming was applied
+    if trim_infos:
+        trimmed_count = sum(1 for t in trim_infos if t["trimmed"])
+        total_removed = sum(t["removed_start_s"] + t["removed_end_s"]
+                            for t in trim_infos)
+        report["auto_trim"] = {
+            "enabled": True,
+            "takes_trimmed": trimmed_count,
+            "total_removed_s": round(total_removed, 2),
+            "per_take": trim_infos,
+        }
 
     progress(100, f"Comp (estrutura) finalizado! "
                   f"{covered_sections}/{n_sections} secoes, "
