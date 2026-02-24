@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Comper v1.0</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- WaveSurfer.js v7 -->
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.esm.js" type="module"></script>
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="header-logo">AC</div>
+                <div class="header-text">
+                    <div class="header-title">Auto-Comper</div>
+                    <div class="header-ver">v1.0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-tab active" data-tab="comp">
+                <span class="nav-dot" style="background: var(--accent)"></span>
+                Comping
+            </button>
+            <button class="nav-tab" data-tab="structure">
+                <span class="nav-dot" style="background: var(--purple)"></span>
+                Estrutura
+            </button>
+            <button class="nav-tab" data-tab="tuning">
+                <span class="nav-dot" style="background: var(--green)"></span>
+                Tuning
+            </button>
+            <button class="nav-tab" data-tab="tone">
+                <span class="nav-dot" style="background: var(--orange, #f0a050)"></span>
+                Tone
+            </button>
+        </nav>
+
+        <!-- Tab: Comping -->
+        <section id="tab-comp" class="tab-content active">
+            <!-- Upload Card -->
+            <div class="card">
+                <div class="card-title">Takes</div>
+                <div id="drop-zone" class="drop-zone">
+                    <div class="drop-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <div class="drop-text">Arraste os WAV/FLAC aqui</div>
+                    <div class="drop-hint">ou clique para selecionar</div>
+                    <input type="file" id="file-input" multiple accept=".wav,.flac,.aiff,.aif" hidden>
+                </div>
+                <div id="file-list" class="file-list"></div>
+            </div>
+
+            <!-- Config Card -->
+            <div class="card">
+                <div class="card-title">Configuracao</div>
+                <div class="config-grid">
+                    <div class="form-item">
+                        <label>Segmentacao</label>
+                        <select id="cfg-segment-method">
+                            <option value="musical" selected>Musical (auto)</option>
+                            <option value="fixed">Blocos fixos</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>Alinhamento</label>
+                        <select id="cfg-alignment">
+                            <option value="xcorr" selected>Cross-correlacao</option>
+                            <option value="none">Nenhum</option>
+                        </select>
+                    </div>
+                    <div class="form-item range-item">
+                        <label>Crossfade <span class="range-val" id="val-crossfade">50ms</span></label>
+                        <input type="range" id="cfg-crossfade" min="10" max="200" value="50" step="5">
+                    </div>
+                    <div class="form-item range-item">
+                        <label>Penalidade de troca <span class="range-val" id="val-switch-penalty">0.15</span></label>
+                        <input type="range" id="cfg-switch-penalty" min="0" max="0.5" value="0.15" step="0.01">
+                    </div>
+                    <div class="form-item range-item">
+                        <label>Melhoria minima <span class="range-val" id="val-min-improvement">0.08</span></label>
+                        <input type="range" id="cfg-min-improvement" min="0" max="0.3" value="0.08" step="0.01">
+                    </div>
+                    <div class="form-item range-item">
+                        <label>Max takes no comp <span class="range-val" id="val-max-takes">4</span></label>
+                        <input type="range" id="cfg-max-takes" min="2" max="16" value="4" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Run Button -->
+            <button id="btn-comp" class="btn btn-go" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5,3 19,12 5,21"/>
+                </svg>
+                Gerar Comp
+            </button>
+
+            <!-- Progress Card -->
+            <div id="progress-card" class="card" style="display:none">
+                <div class="progress-header">
+                    <span class="card-title" style="margin-bottom:0">Progresso</span>
+                    <span id="progress-pct" class="progress-pct">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+                <div id="progress-msg" class="progress-msg">Iniciando...</div>
+            </div>
+
+            <!-- Result Card -->
+            <div id="result-card" class="card" style="display:none">
+                <div class="card-title">Resultado</div>
+
+                <!-- Audio Player -->
+                <div class="player">
+                    <button id="btn-play" class="btn-icon">
+                        <svg id="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5,3 19,12 5,21"/>
+                        </svg>
+                        <svg id="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                            <rect x="6" y="4" width="4" height="16"/>
+                            <rect x="14" y="4" width="4" height="16"/>
+                        </svg>
+                    </button>
+                    <span id="player-time" class="player-time">0:00 / 0:00</span>
+                    <div id="player-waveform" class="player-waveform"></div>
+                </div>
+
+                <!-- Stats -->
+                <div id="result-stats" class="stats-grid"></div>
+
+                <!-- Take Usage -->
+                <div id="result-usage" class="usage-bar-container"></div>
+
+                <!-- Decisions Table -->
+                <details class="decisions-details">
+                    <summary>Decisoes por bloco</summary>
+                    <div id="result-decisions" class="decisions-table"></div>
+                </details>
+
+                <!-- Download -->
+                <a id="btn-download" class="btn btn-outline" href="#" download>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Baixar WAV
+                </a>
+            </div>
+        </section>
+
+        <!-- Tab: Structure -->
+        <section id="tab-structure" class="tab-content">
+            <div class="card">
+                <div class="card-title">Estrutura</div>
+                <div class="placeholder-msg">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 21V9"/>
+                    </svg>
+                    <p>Deteccao de estrutura sera implementada no Sprint 3.</p>
+                    <p class="hint">Detecte versos, refraos e secoes automaticamente.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Tuning -->
+        <section id="tab-tuning" class="tab-content">
+            <!-- Upload Card (single file) -->
+            <div class="card">
+                <div class="card-title">Arquivo</div>
+                <div id="tune-drop-zone" class="drop-zone">
+                    <div class="drop-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <div class="drop-text">Arraste um WAV/FLAC aqui</div>
+                    <div class="drop-hint">ou clique para selecionar</div>
+                    <input type="file" id="tune-file-input" accept=".wav,.flac,.aiff,.aif" hidden>
+                </div>
+                <div id="tune-file-info" class="file-list"></div>
+            </div>
+
+            <!-- Config Card -->
+            <div class="card">
+                <div class="card-title">Configuracao</div>
+                <div class="config-grid">
+                    <div class="form-item">
+                        <label>Instrumento</label>
+                        <select id="tune-cfg-instrument">
+                            <option value="voice" selected>Voz</option>
+                            <option value="guitar">Violao / Guitarra</option>
+                            <option value="auto">Auto-detectar</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>Escala</label>
+                        <select id="tune-cfg-scale">
+                            <option value="major" selected>Maior</option>
+                            <option value="minor">Menor</option>
+                            <option value="harmonic_minor">Menor harmonica</option>
+                            <option value="pentatonic_major">Pentatonica maior</option>
+                            <option value="pentatonic_minor">Pentatonica menor</option>
+                            <option value="blues">Blues</option>
+                            <option value="dorian">Dorian</option>
+                            <option value="mixolydian">Mixolydian</option>
+                            <option value="chromatic">Cromatica</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>Nota base</label>
+                        <select id="tune-cfg-root">
+                            <option value="auto" selected>Auto-detectar</option>
+                            <option value="C">C</option>
+                            <option value="C#">C#</option>
+                            <option value="D">D</option>
+                            <option value="D#">D# / Eb</option>
+                            <option value="E">E</option>
+                            <option value="F">F</option>
+                            <option value="F#">F# / Gb</option>
+                            <option value="G">G</option>
+                            <option value="G#">G# / Ab</option>
+                            <option value="A">A</option>
+                            <option value="A#">A# / Bb</option>
+                            <option value="B">B</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label class="toggle-label">
+                            <span>Preservar vibrato</span>
+                            <label class="toggle">
+                                <input type="checkbox" id="tune-cfg-vibrato" checked>
+                                <span class="switch"></span>
+                            </label>
+                        </label>
+                    </div>
+                    <div class="form-item range-item" style="grid-column: 1 / -1">
+                        <label>Correcao <span class="range-val" id="tune-val-correction">80%</span></label>
+                        <input type="range" id="tune-cfg-correction" min="0" max="100" value="80" step="1">
+                    </div>
+                    <div class="form-item range-item" style="grid-column: 1 / -1">
+                        <label>Velocidade <span class="range-val" id="tune-val-speed">50</span></label>
+                        <input type="range" id="tune-cfg-speed" min="0" max="100" value="50" step="1">
+                        <div class="range-labels">
+                            <span>Sutil</span>
+                            <span>Tight</span>
+                        </div>
+                    </div>
+                    <div class="form-item">
+                        <label class="toggle-label">
+                            <span>Normalizar saida</span>
+                            <label class="toggle">
+                                <input type="checkbox" id="tune-cfg-normalize" checked>
+                                <span class="switch"></span>
+                            </label>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tune Button -->
+            <button id="btn-tune" class="btn btn-go btn-tune" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                Aplicar Tuning
+            </button>
+
+            <!-- Progress Card -->
+            <div id="tune-progress-card" class="card" style="display:none">
+                <div class="progress-header">
+                    <span class="card-title" style="margin-bottom:0">Progresso</span>
+                    <span id="tune-progress-pct" class="progress-pct">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="tune-progress-bar" class="progress-bar tune-bar"></div>
+                </div>
+                <div id="tune-progress-msg" class="progress-msg">Iniciando...</div>
+            </div>
+
+            <!-- Warning Banner -->
+            <div id="tune-warning" class="warning-banner" style="display:none"></div>
+
+            <!-- Result Card -->
+            <div id="tune-result-card" class="card" style="display:none">
+                <div class="card-title">Resultado</div>
+
+                <!-- A/B Toggle -->
+                <div id="tune-ab-toggle" class="ab-toggle">
+                    <button class="ab-toggle-btn" data-mode="original">Original</button>
+                    <button class="ab-toggle-btn active" data-mode="tuned">Tuned</button>
+                </div>
+
+                <!-- Audio Player -->
+                <div class="player">
+                    <button id="tune-btn-play" class="btn-icon">
+                        <svg id="tune-icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5,3 19,12 5,21"/>
+                        </svg>
+                        <svg id="tune-icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                            <rect x="6" y="4" width="4" height="16"/>
+                            <rect x="14" y="4" width="4" height="16"/>
+                        </svg>
+                    </button>
+                    <span id="tune-player-time" class="player-time">0:00 / 0:00</span>
+                    <div class="ab-waveforms">
+                        <div id="tune-waveform-tuned" class="player-waveform"></div>
+                        <div id="tune-waveform-original" class="player-waveform" style="display:none"></div>
+                    </div>
+                </div>
+
+                <!-- Result Stats -->
+                <div id="tune-result-stats" class="stats-grid"></div>
+
+                <!-- Pitch Analysis Stats -->
+                <details class="decisions-details">
+                    <summary>Analise de pitch</summary>
+                    <div id="tune-pitch-stats" class="stats-grid"></div>
+                </details>
+
+                <!-- Pitch Visualization -->
+                <div class="pitch-canvas-wrap">
+                    <canvas id="tune-pitch-canvas"></canvas>
+                </div>
+
+                <!-- Downloads -->
+                <div class="tune-downloads">
+                    <a id="tune-btn-download" class="btn btn-outline" href="#" download>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Baixar Tuned
+                    </a>
+                    <a id="tune-btn-download-orig" class="btn btn-outline btn-secondary" href="#" download style="display:none">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Baixar Original
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════ TAB: TONE ═══════════════════ -->
+        <section id="tab-tone" class="tab-content">
+
+            <!-- Preset Library -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Biblioteca de Presets</h3>
+                    <button id="tone-btn-new" class="btn btn-small btn-tone">+ Novo</button>
+                </div>
+                <div id="tone-preset-list" class="preset-grid">
+                    <div class="preset-empty">Nenhum preset criado ainda. Clique em "+ Novo" para comecar.</div>
+                </div>
+            </div>
+
+            <!-- New Preset Form (hidden by default) -->
+            <div id="tone-new-preset-card" class="card" style="display:none">
+                <h3>Novo Preset</h3>
+                <div class="form-grid">
+                    <div class="form-item" style="grid-column: 1 / -1">
+                        <label>Nome do Preset</label>
+                        <input type="text" id="tone-preset-name" class="text-input"
+                               placeholder="Ex: Phoebe Bridgers - The Garden Song">
+                    </div>
+                </div>
+                <div id="tone-ref-drop-zone" class="drop-zone" style="margin-top: 12px">
+                    <div class="drop-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 3v12M5 10l7 7 7-7"/>
+                            <path d="M20 21H4"/>
+                        </svg>
+                    </div>
+                    <div class="drop-text">Arraste o audio de referencia aqui</div>
+                    <div class="drop-hint">WAV, FLAC, AIFF &bull; Minimo 2 segundos</div>
+                </div>
+                <input type="file" id="tone-ref-file-input" accept=".wav,.flac,.aiff,.aif" hidden>
+                <div id="tone-ref-file-info" class="file-list"></div>
+                <div style="display: flex; gap: 10px; margin-top: 12px">
+                    <button id="btn-create-preset" class="btn btn-go btn-tone" disabled>
+                        Criar Preset
+                    </button>
+                    <button id="btn-cancel-preset" class="btn btn-outline">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Preset Creation Progress -->
+            <div id="tone-create-progress-card" class="card" style="display:none">
+                <div class="progress-header">
+                    <span>Criando preset...</span>
+                    <span id="tone-create-progress-pct" class="progress-pct">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="tone-create-progress-bar" class="progress-bar tone-bar"></div>
+                </div>
+                <div id="tone-create-progress-msg" class="progress-msg">Analisando...</div>
+            </div>
+
+            <!-- Apply Preset Section -->
+            <div class="card">
+                <h3>Aplicar Tone</h3>
+
+                <!-- Upload Guitar Take -->
+                <div id="tone-apply-drop-zone" class="drop-zone">
+                    <div class="drop-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 18V5l12-2v13"/>
+                            <circle cx="6" cy="18" r="3"/>
+                            <circle cx="18" cy="16" r="3"/>
+                        </svg>
+                    </div>
+                    <div class="drop-text">Arraste o take de guitarra aqui</div>
+                    <div class="drop-hint">WAV, FLAC, AIFF</div>
+                </div>
+                <input type="file" id="tone-apply-file-input" accept=".wav,.flac,.aiff,.aif" hidden>
+                <div id="tone-apply-file-info" class="file-list"></div>
+
+                <!-- Config -->
+                <div class="form-grid" style="margin-top: 12px">
+                    <div class="form-item">
+                        <label>Preset</label>
+                        <select id="tone-cfg-preset">
+                            <option value="">Selecione um preset...</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>Modo</label>
+                        <select id="tone-cfg-mode">
+                            <option value="dsp">DSP</option>
+                            <option value="neural">DSP + Neural</option>
+                        </select>
+                    </div>
+                    <div class="form-item range-item" style="grid-column: 1 / -1">
+                        <label>Intensidade <span class="range-val" id="tone-val-intensity">80%</span></label>
+                        <input type="range" id="tone-cfg-intensity" min="0" max="100" value="80" step="1">
+                        <div class="range-labels">
+                            <span>Sutil</span>
+                            <span>Forte</span>
+                        </div>
+                    </div>
+                    <div class="form-item">
+                        <label class="toggle-label">
+                            <span>Normalizar saida</span>
+                            <label class="toggle">
+                                <input type="checkbox" id="tone-cfg-normalize" checked>
+                                <span class="switch"></span>
+                            </label>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apply Button -->
+            <button id="btn-apply-tone" class="btn btn-go btn-tone" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18V5l12-2v13"/>
+                    <circle cx="6" cy="18" r="3"/>
+                    <circle cx="18" cy="16" r="3"/>
+                </svg>
+                Aplicar Tone
+            </button>
+
+            <!-- Apply Progress -->
+            <div id="tone-apply-progress-card" class="card" style="display:none">
+                <div class="progress-header">
+                    <span>Aplicando tone matching...</span>
+                    <span id="tone-apply-progress-pct" class="progress-pct">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="tone-apply-progress-bar" class="progress-bar tone-bar"></div>
+                </div>
+                <div id="tone-apply-progress-msg" class="progress-msg">Iniciando...</div>
+            </div>
+
+            <!-- Result -->
+            <div id="tone-result-card" class="card" style="display:none">
+                <h3>Resultado</h3>
+
+                <!-- A/B Toggle -->
+                <div class="player-card">
+                    <div id="tone-ab-toggle" class="ab-toggle">
+                        <button class="ab-toggle-btn" data-mode="original">Original</button>
+                        <button class="ab-toggle-btn active" data-mode="processed">Processed</button>
+                    </div>
+                    <div class="player-controls">
+                        <button id="tone-btn-play" class="btn-icon">
+                            <svg id="tone-icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5,3 19,12 5,21"/>
+                            </svg>
+                            <svg id="tone-icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                                <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                            </svg>
+                        </button>
+                        <span id="tone-player-time" class="player-time">0:00 / 0:00</span>
+                    </div>
+                    <div class="ab-waveforms">
+                        <div id="tone-waveform-processed" class="player-waveform"></div>
+                        <div id="tone-waveform-original" class="player-waveform" style="display:none"></div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div id="tone-result-stats" class="stats-grid"></div>
+
+                <!-- Spectral Comparison Canvas -->
+                <details open>
+                    <summary>Comparacao Espectral</summary>
+                    <div class="pitch-canvas-wrap">
+                        <canvas id="tone-spectral-canvas"></canvas>
+                    </div>
+                </details>
+
+                <!-- Downloads -->
+                <div class="tune-downloads">
+                    <a id="tone-btn-download" class="btn btn-outline" href="#" download>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Baixar Processed
+                    </a>
+                    <a id="tone-btn-download-orig" class="btn btn-outline btn-secondary" href="#" download style="display:none">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Baixar Original
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            Auto-Comper v1.0 &mdash; Curadoria inteligente de takes
+        </footer>
+    </div>
+
+    <!-- App JS -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/upload.js"></script>
+    <script src="/js/comping.js"></script>
+    <script src="/js/tuning.js"></script>
+    <script src="/js/presets.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

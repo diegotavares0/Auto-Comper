@@ -1,0 +1,204 @@
+/* Auto-Comper v1.0 — Dark Theme */
+
+:root {
+    --bg-deep: #0a0a0f;
+    --bg: #101018;
+    --bg-card: #16161f;
+    --bg-input: #1c1c28;
+    --bg-hover: #22222e;
+    --border: #2a2a3a;
+    --border-light: #33334a;
+    --text: #e8e8f0;
+    --text-dim: #8888a0;
+    --text-muted: #555568;
+    --accent: #6c8cff;
+    --accent-bright: #8cacff;
+    --accent-dim: #4a6ad4;
+    --green: #5cbf78;
+    --green-dim: #2a5a3a;
+    --orange: #e0a040;
+    --red: #e05858;
+    --purple: #a87cff;
+    --cyan: #5cc8d8;
+    --r: 8px;
+    --r-lg: 12px;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    --tr: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Body */
+body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-deep);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* App container */
+.app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 20px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent-dim), var(--purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.header-title {
+    font-size: 1.15em;
+    font-weight: 600;
+}
+
+.header-ver {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72em;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Navigation */
+.nav {
+    display: flex;
+    gap: 2px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 3px;
+    margin-bottom: 24px;
+}
+
+.nav-tab {
+    flex: 1;
+    padding: 10px 16px;
+    text-align: center;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.87em;
+    color: var(--text-dim);
+    transition: all var(--tr);
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.nav-tab:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+}
+
+.nav-tab.active {
+    background: var(--bg-card);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Tab content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 30px 0 10px;
+    font-size: 0.75em;
+    color: var(--text-muted);
+}
+
+/* Placeholder message for unimplemented tabs */
+.placeholder-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.placeholder-msg p {
+    color: var(--text-dim);
+    font-size: 0.92em;
+}
+
+.placeholder-msg .hint {
+    color: var(--text-muted);
+    font-size: 0.82em;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-light);
+}
+
+/* Selection */
+::selection {
+    background: var(--accent-dim);
+    color: #fff;
+}
