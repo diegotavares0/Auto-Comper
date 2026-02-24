@@ -1,0 +1,14 @@
+# Don't send these to Docker build context
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.claude/
+.DS_Store
+*.log
+*.tmp
+tests/
+data/presets/
+ROADMAP_AUTOCOMPER.txt
