@@ -131,6 +131,12 @@ def create_app() -> Flask:
             rules.min_improvement_to_switch = float(request.form.get("min_improvement", 0.08))
             rules.max_takes_in_comp = int(request.form.get("max_takes", 4))
 
+            # Tempo/Pitch normalization
+            rules.tempo_normalize_intensity = float(
+                request.form.get("tempo_normalize_intensity", 0))
+            rules.pitch_center_intensity = float(
+                request.form.get("pitch_center_intensity", 0))
+
             # Custom sections from Structure tab (manual block boundaries)
             custom_sec = request.form.get("custom_sections", "")
             if custom_sec:

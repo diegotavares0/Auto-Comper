@@ -40,6 +40,10 @@ class CompRules:
     # Structure-aware comping (sections confirmed from Structure tab)
     structure_sections: Optional[List[Dict]] = None
 
+    # Tempo/Pitch Normalization (0 = off, 100 = full correction)
+    tempo_normalize_intensity: float = 0.0    # 0-100
+    pitch_center_intensity: float = 0.0       # 0-100
+
     # Auto-trim
     auto_trim_enabled: bool = True
     trim_silence_threshold_db: float = -45.0

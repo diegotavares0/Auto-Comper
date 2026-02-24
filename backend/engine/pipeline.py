@@ -84,6 +84,20 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
     progress(15, f"Takes alinhados: {duration:.1f}s, {n_takes} takes"
                  f"{f' ({len(dropped)} descartados)' if dropped else ''}")
 
+    # Phase 0.5: Tempo/Pitch Normalization (if enabled)
+    if rules.tempo_normalize_intensity > 0 or rules.pitch_center_intensity > 0:
+        from backend.engine.normalizer import normalize_takes
+        progress(16, "Normalizando tempo e pitch...")
+        takes = normalize_takes(
+            takes, sr,
+            tempo_intensity=rules.tempo_normalize_intensity,
+            pitch_intensity=rules.pitch_center_intensity,
+            progress_cb=progress,
+        )
+        # Re-truncate to min length (time-stretch may change lengths)
+        min_len = min(len(t) for t in takes)
+        takes = [t[:min_len] for t in takes]
+
     # Phase 1: Rank takes
     progress(20, "Ranqueando takes inteiros...")
     take_ranking = rank_takes(takes, sr, rules)
@@ -189,6 +203,19 @@ def _run_structure_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
     ref_duration = len(ref_audio) / sr
 
     progress(5, f"Take de referencia: {ref_idx + 1} ({ref_duration:.1f}s)")
+
+    # ── Step 1.5: Tempo/Pitch Normalization (if enabled) ──
+    if rules.tempo_normalize_intensity > 0 or rules.pitch_center_intensity > 0:
+        from backend.engine.normalizer import normalize_takes
+        progress(6, "Normalizando tempo e pitch...")
+        takes = normalize_takes(
+            takes, sr,
+            tempo_intensity=rules.tempo_normalize_intensity,
+            pitch_intensity=rules.pitch_center_intensity,
+            progress_cb=progress,
+        )
+        # Update reference audio (it may have been modified)
+        ref_audio = takes[ref_idx]
 
     # ── Step 2: Get or detect structure ──
     if rules.structure_sections:

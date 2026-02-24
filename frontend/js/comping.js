@@ -24,6 +24,11 @@ const Comping = {
         this.bindSlider('cfg-min-improvement', 'val-min-improvement', (v) => v);
         this.bindSlider('cfg-max-takes', 'val-max-takes', (v) => v);
 
+        // Normalization sliders
+        const normFmt = (v) => v == 0 ? 'Off' : v + '%';
+        this.bindSlider('cfg-tempo-norm', 'val-tempo-norm', normFmt);
+        this.bindSlider('cfg-pitch-center', 'val-pitch-center', normFmt);
+
         // Comp button
         this.btnComp.addEventListener('click', () => this.runComp());
 
@@ -64,6 +69,8 @@ const Comping = {
             switch_penalty: Utils.$('#cfg-switch-penalty').value,
             min_improvement: Utils.$('#cfg-min-improvement').value,
             max_takes: Utils.$('#cfg-max-takes').value,
+            tempo_normalize_intensity: Utils.$('#cfg-tempo-norm').value,
+            pitch_center_intensity: Utils.$('#cfg-pitch-center').value,
         };
     },
 
