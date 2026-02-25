@@ -1,4 +1,4 @@
-# Auto-Comper — Production Dockerfile for Railway
+# Produtora — Production Dockerfile for Railway
 # Multi-stage build to keep image lean
 
 FROM python:3.11-slim AS base

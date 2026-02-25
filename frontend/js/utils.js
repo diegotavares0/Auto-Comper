@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — DOM helpers, formatters, colors.
+ * Produtora — DOM helpers, formatters, colors.
  */
 
 const Utils = {

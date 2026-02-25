@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — API communication + SSE progress.
+ * Produtora — API communication + SSE progress.
  */
 
 const API = {

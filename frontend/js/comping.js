@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — Comping tab logic.
+ * Produtora — Comping tab logic.
  */
 
 const Comping = {

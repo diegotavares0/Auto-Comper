@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Auto-Comper v1.0 — Diego & Claude 2026
+Produtora — Diego & Claude 2026
 Run: python run.py -> http://localhost:8085
 """
 
@@ -18,8 +18,8 @@ PORT = 8085
 def main():
     print(f"""
 ======================================================
-  AUTO-COMPER v1.0
-  Comping + Estrutura + Tuning
+  PRODUTORA v2.0
+  AI-powered music production
 ------------------------------------------------------
   Abra: http://localhost:{PORT}
   Ctrl+C para parar

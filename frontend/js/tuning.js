@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — Tuning tab logic.
+ * Produtora — Tuning tab logic.
  * Upload single file, configure pitch correction, A/B comparison.
  */
 

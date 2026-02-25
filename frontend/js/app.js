@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — App init, tab routing, global state.
+ * Produtora — App init, tab routing, global state.
  */
 
 const App = {
@@ -26,7 +26,7 @@ const App = {
             });
         });
 
-        console.log('Auto-Comper v1.0 inicializado');
+        console.log('Produtora inicializado');
     },
 
     /**

@@ -1,5 +1,5 @@
 """
-Auto-Comper — Production WSGI entry point.
+Produtora — Production WSGI entry point.
 Used by gunicorn in Docker/Railway deployment.
 """
 

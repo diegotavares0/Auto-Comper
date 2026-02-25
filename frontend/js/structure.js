@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — Structure tab logic.
+ * Produtora — Structure tab logic.
  *
  * Detect musical sections (Intro, Verso, Refrao, Ponte, Outro) from a
  * reference take, let the user edit labels, and confirm for use in comping.

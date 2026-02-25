@@ -1,5 +1,5 @@
 """
-Auto-Comper v1.0 — Flask application with API routes and SSE progress.
+Produtora — Flask application with API routes and SSE progress.
 """
 
 import json
@@ -27,7 +27,7 @@ from backend.presets import neural as neural_module
 log = logging.getLogger("comper")
 
 # Temp directories
-OUTPUT_DIR = tempfile.mkdtemp(prefix="autocomper_out_")
+OUTPUT_DIR = tempfile.mkdtemp(prefix="produtora_out_")
 
 # Store results from background tasks (task_id -> result dict)
 _task_results = {}

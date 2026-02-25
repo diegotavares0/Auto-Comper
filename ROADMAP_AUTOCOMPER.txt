@@ -1,0 +1,149 @@
+============================================================
+AUTO-COMPER — ROADMAP DO PROJETO
+============================================================
+Atualizado: 22/02/2026
+Versão atual: v0.5.1 (Web App - Browser)
+============================================================
+
+VISÃO GERAL
+------------
+Ferramenta de auto-comping inteligente para músicos.
+Seleciona automaticamente os melhores trechos de múltiplos
+takes e monta a melhor versão final da performance.
+
+Filosofia: manter o fluxo musical natural, trocar de take
+só quando vale a pena, evitar "frankenstein" sonoro.
+
+
+============================================================
+ESTADO ATUAL — O QUE JÁ FOI DESENVOLVIDO
+============================================================
+
+[Browser - v0.5.1 - JavaScript/Web Audio API]
+- Upload de múltiplos takes
+- Ranking global por qualidade (pitch stability, clarity,
+  energia, onset strength, noise floor)
+- Preview com botões de play inline
+- Seleção manual de takes (Top 3 / Top 5 / All / None)
+- Detecção de blocos musicais (2-15s)
+- Troca de take só com melhora >8% + penalidade de 15%
+  por troca (prioriza continuidade)
+- Crossfade inteligente
+- 100% client-side, sem dependências de servidor
+
+[Python - v0.4/v0.5 - Back-end robusto]
+- DTW alignment (takes gravados sem click track)
+- Separação de fontes com Demucs (voz + instrumento juntos)
+- Scoring independente vocal/instrumental
+- Detecção de respiração e ruído
+- Anti-frankenstein (consistência de timbre via MFCC)
+- Crossfade phase-coherent
+- Normalização LUFS
+
+STATUS: UI com bugs — botões não respondem em algumas
+telas. Funcionalidades precisam ser validadas uma a uma.
+
+
+============================================================
+PRÓXIMO PASSO — DETECÇÃO DE ESTRUTURA MUSICAL (HÍBRIDA)
+============================================================
+
+Sistema inteligente que entende a estrutura da música
+e corta/alinha os takes automaticamente.
+
+Fluxo:
+  1. Usuário sobe os takes
+  2. App analisa um take de referência e sugere estrutura:
+     "Intro (0-15s) | Verso (15-45s) | Refrão (45-70s)..."
+  3. Usuário confirma ou corrige numa interface visual
+     (waveform clicável com drag pra marcar seções)
+  4. App aplica a estrutura confirmada em TODOS os takes
+     automaticamente (via similaridade / DTW)
+
+Benefício: O que levava ~1 hora de cortes manuais
+vira ~2 minutos de marcação visual.
+
+Técnicas envolvidas:
+  - Self-similarity matrix (detecção de repetições)
+  - Beat tracking + onset detection
+  - Chromagram analysis (harmonia)
+  - DTW para alinhar estrutura entre takes
+
+
+============================================================
+ROADMAP COMPLETO — FASES
+============================================================
+
+FASE 1 — ESTABILIZAÇÃO + ESTRUTURA MUSICAL
+  [ ] Corrigir bugs da UI (botões, telas não responsivas)
+  [ ] Validar funcionalidades existentes uma a uma
+  [ ] Auto-trim inteligente (ignorar afinação, tosse, ruído)
+  [ ] Detecção de estrutura musical automática
+  [ ] Interface visual de waveform para marcar seções
+  [ ] Input do usuário para confirmar/corrigir estrutura
+  [ ] Aplicar estrutura de referência em todos os takes
+
+FASE 2 — SELEÇÃO DE TRECHOS + SCORING
+  [ ] Seleção de "momentos mágicos" dentro de cada take
+      (marcar trechos específicos em vez de usar take inteiro)
+  [ ] Refinamento dos critérios de scoring
+  [ ] Ajuste de pesos pelo usuário (ex: priorizar timbre
+      sobre pitch, ou expressividade sobre precisão)
+
+FASE 3 — VOCAL TUNING INTEGRADO
+  [ ] Correção de pitch (pYIN + Rubberband)
+  [ ] Tuning sutil vs. agressivo (configurável)
+  [ ] Preview antes/depois do tuning
+  [ ] Aplicar tuning no comp final
+
+FASE 4 — POLIMENTO E UX
+  [ ] Style profiles / presets (MPB, indie, pop, etc.)
+  [ ] Relatório visual do comp (por que escolheu cada trecho)
+  [ ] Export direto pra formatos de DAW
+  [ ] Suporte a harmonia / backing vocals
+
+FASE 5 — DISTRIBUIÇÃO
+  [ ] CLI Python (✅ existe)
+  [ ] Web App (⬅️ estamos aqui)
+  [ ] Desktop GUI (Electron ou similar)
+  [ ] VST3/AU Plugin (JUCE framework)
+
+
+============================================================
+PRINCÍPIOS DO PROJETO
+============================================================
+
+1. Fluxo musical > perfeição técnica
+   Manter a continuidade natural é mais importante
+   que ter cada nota perfeita.
+
+2. Humano no controle
+   O app sugere, o músico decide. Sempre mostrar
+   o que está fazendo e permitir ajustes.
+
+3. Anti-frankenstein
+   Nunca criar algo que soe artificial ou forçado.
+   Consistência de timbre é inegociável.
+
+4. Progressivo
+   Cada versão entrega valor real. Não esperar
+   perfeição pra ser útil.
+
+5. Self-hosted
+   Controle total dos dados e ferramentas.
+   Sem dependência de assinaturas externas.
+
+
+============================================================
+NOTAS
+============================================================
+
+- Diego grava ~16 takes como processo meditativo
+- Fluxo: Logic Pro → exporta WAVs → Produtora → importa comp
+- Gravações frequentemente sem click track (DTW essencial)
+- Muitas vezes voz e violão no mesmo take (Demucs)
+- Resultado atual: de ~30s bons para ~40s bons por comp
+- Meta: resultado cada vez mais próximo de um comp manual
+  feito por um produtor experiente
+
+============================================================

@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — Drag-and-drop file upload component.
+ * Produtora — Drag-and-drop file upload component.
  */
 
 const Upload = {

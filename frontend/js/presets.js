@@ -1,5 +1,5 @@
 /**
- * Auto-Comper v1.0 — Tone presets tab logic.
+ * Produtora — Tone presets tab logic.
  * Create presets from reference clips, apply to guitar takes, A/B comparison.
  */
 

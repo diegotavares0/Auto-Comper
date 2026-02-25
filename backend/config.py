@@ -1,5 +1,5 @@
 """
-Auto-Comper v1.0 — Configuration dataclasses.
+Produtora — Configuration dataclasses.
 """
 
 import json
@@ -9,7 +9,7 @@ from typing import List, Optional, Dict
 
 @dataclass
 class CompRules:
-    """Configurable rules for the auto-comper."""
+    """Configurable rules for Produtora comping engine."""
 
     # Scoring weights (sum to 1.0)
     weight_pitch_stability: float = 0.30
