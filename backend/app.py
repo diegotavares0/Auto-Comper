@@ -135,6 +135,16 @@ def create_app() -> Flask:
             rules.auto_trim_enabled = request.form.get(
                 "auto_trim", "true").lower() == "true"
 
+            # Pre-filtering (outlier detection)
+            rules.prefilter_enabled = request.form.get(
+                "prefilter_enabled", "false").lower() == "true"
+            rules.prefilter_max_bpm_deviation = float(
+                request.form.get("prefilter_max_bpm_deviation", 15))
+            rules.prefilter_max_pitch_deviation = float(
+                request.form.get("prefilter_max_pitch_deviation", 80))
+            rules.prefilter_max_energy_deviation = float(
+                request.form.get("prefilter_max_energy_deviation", 40))
+
             # Tempo/Pitch normalization
             rules.tempo_normalize_intensity = float(
                 request.form.get("tempo_normalize_intensity", 0))

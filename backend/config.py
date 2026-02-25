@@ -49,6 +49,12 @@ class CompRules:
     trim_silence_threshold_db: float = -45.0
     trim_min_music_duration_s: float = 1.0
 
+    # Pre-filtering (outlier detection)
+    prefilter_enabled: bool = False
+    prefilter_max_bpm_deviation: float = 15.0       # % of median
+    prefilter_max_pitch_deviation: float = 80.0     # cents
+    prefilter_max_energy_deviation: float = 40.0    # % of median
+
     # Crossfade
     crossfade_ms: float = 50.0
 

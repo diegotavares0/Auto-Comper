@@ -24,6 +24,18 @@ const Comping = {
         this.bindSlider('cfg-min-improvement', 'val-min-improvement', (v) => v);
         this.bindSlider('cfg-max-takes', 'val-max-takes', (v) => v);
 
+        // Pre-filter toggle + sliders
+        const prefilterToggle = Utils.$('#cfg-prefilter');
+        const prefilterOpts = Utils.$('#prefilter-options');
+        if (prefilterToggle && prefilterOpts) {
+            prefilterToggle.addEventListener('change', () => {
+                prefilterOpts.style.display = prefilterToggle.checked ? '' : 'none';
+            });
+        }
+        this.bindSlider('cfg-prefilter-bpm', 'val-prefilter-bpm', (v) => v + '%');
+        this.bindSlider('cfg-prefilter-pitch', 'val-prefilter-pitch', (v) => v + ' cents');
+        this.bindSlider('cfg-prefilter-energy', 'val-prefilter-energy', (v) => v + '%');
+
         // Normalization sliders
         const normFmt = (v) => v == 0 ? 'Off' : v + '%';
         this.bindSlider('cfg-tempo-norm', 'val-tempo-norm', normFmt);
@@ -70,6 +82,10 @@ const Comping = {
             min_improvement: Utils.$('#cfg-min-improvement').value,
             max_takes: Utils.$('#cfg-max-takes').value,
             auto_trim: Utils.$('#cfg-auto-trim').checked ? 'true' : 'false',
+            prefilter_enabled: Utils.$('#cfg-prefilter').checked ? 'true' : 'false',
+            prefilter_max_bpm_deviation: Utils.$('#cfg-prefilter-bpm').value,
+            prefilter_max_pitch_deviation: Utils.$('#cfg-prefilter-pitch').value,
+            prefilter_max_energy_deviation: Utils.$('#cfg-prefilter-energy').value,
             tempo_normalize_intensity: Utils.$('#cfg-tempo-norm').value,
             pitch_center_intensity: Utils.$('#cfg-pitch-center').value,
         };
@@ -299,6 +315,16 @@ const Comping = {
             statsEl.appendChild(box);
         }
 
+        // Pre-filter stats
+        const prefilterEl = Utils.$('#result-prefilter');
+        prefilterEl.innerHTML = '';
+        if (report.prefilter && report.prefilter.enabled && !report.prefilter.skipped) {
+            this.renderPrefilterStats(prefilterEl, report.prefilter);
+            prefilterEl.style.display = '';
+        } else {
+            prefilterEl.style.display = 'none';
+        }
+
         // Normalization stats
         const normEl = Utils.$('#result-norm');
         normEl.innerHTML = '';
@@ -371,6 +397,65 @@ const Comping = {
                 row.append(blk, takeBadge, score, time, switchBadge);
                 decisionsEl.appendChild(row);
             }
+        }
+    },
+
+    /**
+     * Render pre-filter stats section in the comp report.
+     */
+    renderPrefilterStats(container, pf) {
+        const title = Utils.el('div', 'config-section-title', 'Pre-filtro de outliers');
+        container.appendChild(title);
+
+        // Summary
+        const summary = Utils.el('div', 'norm-summary',
+            `${pf.excluded_count} take(s) excluido(s) de ${pf.total_takes} · ` +
+            `Mediana: ${pf.median_bpm} BPM, ${pf.median_pitch_hz} Hz`
+        );
+        container.appendChild(summary);
+
+        // Per-take table
+        if (pf.per_take && pf.per_take.length > 0) {
+            const details = document.createElement('details');
+            details.className = 'decisions-details';
+            const sum = document.createElement('summary');
+            sum.textContent = 'Analise por take';
+            details.appendChild(sum);
+
+            const table = Utils.el('div', 'norm-table');
+
+            const header = Utils.el('div', 'norm-row header');
+            header.innerHTML = '<span>Take</span><span>BPM</span><span>Pitch (Hz)</span><span>Status</span>';
+            table.appendChild(header);
+
+            for (const pt of pf.per_take) {
+                const row = Utils.el('div', 'norm-row');
+
+                const take = Utils.el('span', 'take-badge', `Take ${pt.take}`);
+                take.style.background = Utils.takeColor(pt.take - 1);
+
+                const bpm = Utils.el('span', '', `${pt.bpm_folded} (±${pt.bpm_deviation_pct}%)`);
+                if (pt.exclusion_reasons && pt.exclusion_reasons.includes('bpm')) {
+                    bpm.style.color = 'var(--red)';
+                }
+
+                const pitch = Utils.el('span', '', `${pt.pitch_hz} (±${pt.pitch_deviation_cents}¢)`);
+                if (pt.exclusion_reasons && pt.exclusion_reasons.includes('pitch')) {
+                    pitch.style.color = 'var(--red)';
+                }
+
+                const status = Utils.el('span', pt.excluded ? 'switch-badge' : '',
+                    pt.excluded ? 'EXCLUIDO' : 'OK');
+                if (!pt.excluded) {
+                    status.style.color = 'var(--green)';
+                }
+
+                row.append(take, bpm, pitch, status);
+                table.appendChild(row);
+            }
+
+            details.appendChild(table);
+            container.appendChild(details);
         }
     },
 

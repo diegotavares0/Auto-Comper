@@ -117,6 +117,32 @@
                         </label>
                     </div>
 
+                    <div class="form-item">
+                        <label class="toggle">
+                            <input type="checkbox" id="cfg-prefilter">
+                            <span class="toggle-switch"></span>
+                            Pre-filtro de outliers
+                        </label>
+                    </div>
+
+                    <div id="prefilter-options" class="sub-options" style="display:none">
+                        <div class="form-item range-item">
+                            <label>Tolerancia BPM <span class="range-val" id="val-prefilter-bpm">15%</span></label>
+                            <input type="range" id="cfg-prefilter-bpm" min="5" max="50" value="15" step="1">
+                            <div class="range-labels"><span>Estrito</span><span>Tolerante</span></div>
+                        </div>
+                        <div class="form-item range-item">
+                            <label>Tolerancia Pitch <span class="range-val" id="val-prefilter-pitch">80 cents</span></label>
+                            <input type="range" id="cfg-prefilter-pitch" min="20" max="200" value="80" step="5">
+                            <div class="range-labels"><span>Estrito</span><span>Tolerante</span></div>
+                        </div>
+                        <div class="form-item range-item">
+                            <label>Tolerancia Energia <span class="range-val" id="val-prefilter-energy">40%</span></label>
+                            <input type="range" id="cfg-prefilter-energy" min="10" max="80" value="40" step="5">
+                            <div class="range-labels"><span>Estrito</span><span>Tolerante</span></div>
+                        </div>
+                    </div>
+
                     <!-- Normalizacao de Takes -->
                     <div class="config-section-title">Normalizacao de Takes</div>
 
@@ -175,6 +201,9 @@
 
                 <!-- Stats -->
                 <div id="result-stats" class="stats-grid"></div>
+
+                <!-- Pre-filter Stats (shown only when pre-filter was applied) -->
+                <div id="result-prefilter" class="norm-stats-container" style="display:none"></div>
 
                 <!-- Normalization Stats (shown only when normalization was applied) -->
                 <div id="result-norm" class="norm-stats-container" style="display:none"></div>

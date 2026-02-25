@@ -1,137 +1,197 @@
 ============================================================
-AUTO-COMPER — ROADMAP DO PROJETO
+PRODUTORA — ROADMAP DO PROJETO
 ============================================================
-Atualizado: 22/02/2026
-Versão atual: v0.5.1 (Web App - Browser)
+Atualizado: 25/02/2026
+Versao atual: v2.0 (Web App - Flask + Vanilla JS)
+Deploy: Railway (auto-comper-production.up.railway.app)
+Repo: github.com/diegotavares0/Auto-Comper
 ============================================================
 
-VISÃO GERAL
+VISAO GERAL
 ------------
-Ferramenta de auto-comping inteligente para músicos.
-Seleciona automaticamente os melhores trechos de múltiplos
-takes e monta a melhor versão final da performance.
+Produtora e uma plataforma de producao musical com IA.
+Comeca com o artista no centro — suas gravacoes reais,
+sua voz, seu violao — e constroi toda a producao ao redor.
 
-Filosofia: manter o fluxo musical natural, trocar de take
-só quando vale a pena, evitar "frankenstein" sonoro.
+Pipeline: Gravar takes → Comp inteligente → Tuning →
+Tone shaping → Gerar backing tracks com IA
 
-
-============================================================
-ESTADO ATUAL — O QUE JÁ FOI DESENVOLVIDO
-============================================================
-
-[Browser - v0.5.1 - JavaScript/Web Audio API]
-- Upload de múltiplos takes
-- Ranking global por qualidade (pitch stability, clarity,
-  energia, onset strength, noise floor)
-- Preview com botões de play inline
-- Seleção manual de takes (Top 3 / Top 5 / All / None)
-- Detecção de blocos musicais (2-15s)
-- Troca de take só com melhora >8% + penalidade de 15%
-  por troca (prioriza continuidade)
-- Crossfade inteligente
-- 100% client-side, sem dependências de servidor
-
-[Python - v0.4/v0.5 - Back-end robusto]
-- DTW alignment (takes gravados sem click track)
-- Separação de fontes com Demucs (voz + instrumento juntos)
-- Scoring independente vocal/instrumental
-- Detecção de respiração e ruído
-- Anti-frankenstein (consistência de timbre via MFCC)
-- Crossfade phase-coherent
-- Normalização LUFS
-
-STATUS: UI com bugs — botões não respondem em algumas
-telas. Funcionalidades precisam ser validadas uma a uma.
+Filosofia: O artista grava, a IA produz. Sem perder
+a alma da performance original.
 
 
 ============================================================
-PRÓXIMO PASSO — DETECÇÃO DE ESTRUTURA MUSICAL (HÍBRIDA)
+ESTADO ATUAL — O QUE JA FOI DESENVOLVIDO (v2.0)
 ============================================================
 
-Sistema inteligente que entende a estrutura da música
-e corta/alinha os takes automaticamente.
+[Backend - Python/Flask]
+  [x] Upload e processamento de multiplos takes (WAV/FLAC/AIFF)
+  [x] Alinhamento via cross-correlation (takes sem click track)
+  [x] Scoring por bloco: pitch stability, clarity, energy,
+      onset strength, noise floor (pesos configuraveis)
+  [x] Segmentacao musical inteligente (2-15s, baseada em
+      onsets e energia)
+  [x] Selecao otima de blocos com penalidade por troca
+      e melhora minima configuravel
+  [x] Crossfade suave entre blocos
+  [x] Auto-trim: remocao automatica de silencio/ruido
+      antes do alinhamento (RMS energy analysis)
+  [x] Normalizacao de tempo (BPM) e pitch entre takes
+      com intensidade configuravel (0-100%)
+  [x] Deteccao de estrutura musical (SSM + novelty analysis)
+      com interface para confirmar/editar secoes
+  [x] Structure-aware comping (comp por secao musical)
+  [x] Tuner: correcao de pitch (pYIN + pitch_shift)
+      com preservacao de vibrato, modos voz/violao
+  [x] Tone presets: analise espectral de referencia,
+      EQ matching, dynamics matching, transient preservation
+  [x] Neural tone refinement (opcional, quando disponivel)
+  [x] SSE progress streaming (tempo real no browser)
+  [x] Background tasks com threading (non-blocking)
+  [x] Normalizacao LUFS + peak limiting no output
 
-Fluxo:
-  1. Usuário sobe os takes
-  2. App analisa um take de referência e sugere estrutura:
-     "Intro (0-15s) | Verso (15-45s) | Refrão (45-70s)..."
-  3. Usuário confirma ou corrige numa interface visual
-     (waveform clicável com drag pra marcar seções)
-  4. App aplica a estrutura confirmada em TODOS os takes
-     automaticamente (via similaridade / DTW)
+[Frontend - Vanilla JS + WaveSurfer.js]
+  [x] Drag-and-drop upload com preview de takes
+  [x] 5 tabs: Comp, Estrutura, Tuning, Presets, Upload
+  [x] Config sliders: crossfade, switch penalty,
+      min improvement, max takes, normalizacao
+  [x] Waveform player com play/pause e timeline
+  [x] Relatorio visual do comp: stats, usage bar
+      por take, decisoes bloco-a-bloco
+  [x] Stats de normalizacao (BPM/pitch por take)
+  [x] Deteccao de estrutura com waveform interativo
+  [x] Tuning A/B comparison player
+  [x] Preset creation + application com A/B
+  [x] Dark theme (design system completo)
 
-Benefício: O que levava ~1 hora de cortes manuais
-vira ~2 minutos de marcação visual.
-
-Técnicas envolvidas:
-  - Self-similarity matrix (detecção de repetições)
-  - Beat tracking + onset detection
-  - Chromagram analysis (harmonia)
-  - DTW para alinhar estrutura entre takes
-
-
-============================================================
-ROADMAP COMPLETO — FASES
-============================================================
-
-FASE 1 — ESTABILIZAÇÃO + ESTRUTURA MUSICAL
-  [ ] Corrigir bugs da UI (botões, telas não responsivas)
-  [ ] Validar funcionalidades existentes uma a uma
-  [ ] Auto-trim inteligente (ignorar afinação, tosse, ruído)
-  [ ] Detecção de estrutura musical automática
-  [ ] Interface visual de waveform para marcar seções
-  [ ] Input do usuário para confirmar/corrigir estrutura
-  [ ] Aplicar estrutura de referência em todos os takes
-
-FASE 2 — SELEÇÃO DE TRECHOS + SCORING
-  [ ] Seleção de "momentos mágicos" dentro de cada take
-      (marcar trechos específicos em vez de usar take inteiro)
-  [ ] Refinamento dos critérios de scoring
-  [ ] Ajuste de pesos pelo usuário (ex: priorizar timbre
-      sobre pitch, ou expressividade sobre precisão)
-
-FASE 3 — VOCAL TUNING INTEGRADO
-  [ ] Correção de pitch (pYIN + Rubberband)
-  [ ] Tuning sutil vs. agressivo (configurável)
-  [ ] Preview antes/depois do tuning
-  [ ] Aplicar tuning no comp final
-
-FASE 4 — POLIMENTO E UX
-  [ ] Style profiles / presets (MPB, indie, pop, etc.)
-  [ ] Relatório visual do comp (por que escolheu cada trecho)
-  [ ] Export direto pra formatos de DAW
-  [ ] Suporte a harmonia / backing vocals
-
-FASE 5 — DISTRIBUIÇÃO
-  [ ] CLI Python (✅ existe)
-  [ ] Web App (⬅️ estamos aqui)
-  [ ] Desktop GUI (Electron ou similar)
-  [ ] VST3/AU Plugin (JUCE framework)
+[Deploy]
+  [x] Dockerfile (python:3.11-slim, gunicorn, gthread)
+  [x] Railway config (auto-deploy via GitHub push)
+  [x] WSGI production entry point
 
 
 ============================================================
-PRINCÍPIOS DO PROJETO
+PROXIMOS PASSOS — FASE 3: REFINAMENTO DO COMP
 ============================================================
 
-1. Fluxo musical > perfeição técnica
-   Manter a continuidade natural é mais importante
+Coisas que ja foram testadas e precisam melhorar:
+
+  [ ] Melhor resultado com takes semelhantes — implementar
+      pre-filtragem automatica de takes muito diferentes
+      (detectar outliers por BPM, pitch center, energia media)
+  [ ] Scoring weights adaptivos por genero/instrumento
+      (MPB vs indie vs pop tem prioridades diferentes)
+  [ ] Selecao de "momentos magicos" — marcar trechos
+      especificos dentro de um take pra forcar no comp
+  [ ] Preview rapido do comp antes de processar
+      (pre-visualizar decisoes na waveform)
+  [ ] Export direto pra formatos de DAW (markers, regions)
+
+
+============================================================
+FASE 4: TONE PRESETS AVANCADOS
+============================================================
+
+O sistema de presets ja existe mas precisa evoluir pra
+se tornar a base da geracao de backing tracks:
+
+  [ ] Biblioteca de presets organizados por instrumento
+      (guitarra, baixo, bateria, teclado, cordas, etc.)
+  [ ] Multi-referencia: combinar 2-3 songs pra definir
+      um som (ex: "grave do Song A + agudos do Song B")
+  [ ] Presets parametricos: alem do timbre, capturar
+      estilo de playing (dinamica, articulacao, ritmo)
+  [ ] Separacao de fontes (Demucs) pra isolar instrumentos
+      de referencia antes de criar preset
+  [ ] Preset sharing / export (JSON com spectral data)
+
+
+============================================================
+FASE 5: GERACAO DE BACKING TRACKS COM IA
+============================================================
+
+A feature principal que transforma Produtora de "ferramenta
+de comp" em "plataforma de producao completa".
+
+Conceito:
+  O artista grava voz + violao. A partir disso, Produtora
+  gera as outras camadas (bateria, baixo, teclado, cordas)
+  condicionadas pela performance real do artista.
+
+  Diferencial vs Suno/Udio: nao gera musica do zero.
+  Gera ACOMPANHAMENTO para uma performance que ja existe.
+  O artista e o centro — a IA e a banda.
+
+Pipeline:
+  1. Artista grava takes e faz comp (ja existe)
+  2. Produtora analisa o comp: tempo, tonalidade,
+     progressao de acordes, estrutura, dinamica
+  3. Artista escolhe presets de referencia por instrumento
+     ("quero bateria como nessa musica, baixo como nessa")
+  4. IA gera multiplas iteracoes de cada instrumento
+  5. Artista escolhe e mixa
+
+Tecnologias candidatas:
+  - MusicGen (Meta) — melody-conditioned generation
+    Modo melody: gera audio condicionado por uma melodia
+    de referencia (o comp do artista)
+  - MusicGen-style fine-tuning com presets de timbre
+  - Possivel: treinar adapters LoRA por instrumento/estilo
+  - Demucs pra separacao de fontes nas referencias
+
+Implementacao incremental:
+  [ ] Integracao basica com MusicGen (inference local ou API)
+  [ ] Geracao condicionada pelo comp (tempo + key + melody)
+  [ ] Constraining por preset de timbre
+  [ ] Multiplas iteracoes por instrumento
+  [ ] Interface de selecao e preview das geracoes
+  [ ] Mixer basico (volume, pan) das camadas geradas
+  [ ] Export mixdown final (stems + master)
+
+Requisitos de infra:
+  - GPU pra inference (MusicGen medium = ~3.3B params)
+  - Opcoes: GPU local, RunPod, Modal, Replicate API
+  - Railway nao tem GPU — precisa de servico separado
+    pra inference ou usar API externa
+
+
+============================================================
+FASE 6: DISTRIBUICAO E POLIMENTO
+============================================================
+
+  [ ] Custom domain (produtora.app ou similar)
+  [ ] Auth + accounts (multi-usuario)
+  [ ] Projetos salvos (historico de comps e geracoes)
+  [ ] Mobile-friendly UI
+  [ ] Desktop app (Electron / Tauri)
+  [ ] VST3/AU plugin (JUCE — long-term)
+  [ ] API publica pra integracao com DAWs
+
+
+============================================================
+PRINCIPIOS DO PROJETO
+============================================================
+
+1. Artista no centro
+   Tudo comeca com a performance real. A IA amplifica,
+   nunca substitui.
+
+2. Fluxo musical > perfeicao tecnica
+   Manter a continuidade natural e mais importante
    que ter cada nota perfeita.
 
-2. Humano no controle
-   O app sugere, o músico decide. Sempre mostrar
-   o que está fazendo e permitir ajustes.
-
 3. Anti-frankenstein
-   Nunca criar algo que soe artificial ou forçado.
-   Consistência de timbre é inegociável.
+   Nunca criar algo que soe artificial ou forcado.
+   Consistencia de timbre e inegociavel.
 
 4. Progressivo
-   Cada versão entrega valor real. Não esperar
-   perfeição pra ser útil.
+   Cada versao entrega valor real. Nao esperar
+   perfeicao pra ser util.
 
-5. Self-hosted
-   Controle total dos dados e ferramentas.
-   Sem dependência de assinaturas externas.
+5. Producao completa
+   O objetivo final nao e so um comp bom — e uma
+   producao completa, com todas as camadas, nascida
+   da gravacao original do artista.
 
 
 ============================================================
@@ -139,11 +199,14 @@ NOTAS
 ============================================================
 
 - Diego grava ~16 takes como processo meditativo
-- Fluxo: Logic Pro → exporta WAVs → Produtora → importa comp
-- Gravações frequentemente sem click track (DTW essencial)
-- Muitas vezes voz e violão no mesmo take (Demucs)
-- Resultado atual: de ~30s bons para ~40s bons por comp
-- Meta: resultado cada vez mais próximo de um comp manual
-  feito por um produtor experiente
+- Fluxo: Logic Pro -> exporta WAVs -> Produtora -> importa comp
+- Gravacoes frequentemente sem click track (alignment essencial)
+- Resultado melhor quando takes sao pre-selecionados por
+  similaridade (handpicked) — automatizar essa filtragem
+- Tone presets testados com songs como referencia pra
+  instrumentos em takes de voz+violao — resultados criativos
+  mas melhor com takes de instrumento isolado
+- Meta de longo prazo: gravar voz+violao, apertar um botao,
+  receber producao completa com banda
 
 ============================================================

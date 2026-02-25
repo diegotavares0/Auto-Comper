@@ -61,6 +61,20 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
             progress_cb=progress,
         )
 
+    # Phase -0.5: Pre-filter outlier takes
+    prefilter_report = None
+    if rules.prefilter_enabled:
+        from backend.engine.prefilter import prefilter_takes
+        progress(7, "Pre-filtrando takes (detectando outliers)...")
+        takes, prefilter_report = prefilter_takes(
+            takes, sr,
+            max_bpm_deviation=rules.prefilter_max_bpm_deviation,
+            max_pitch_deviation=rules.prefilter_max_pitch_deviation,
+            max_energy_deviation=rules.prefilter_max_energy_deviation,
+            progress_cb=progress,
+        )
+        n_takes = len(takes)
+
     # Phase 0: Align
     if rules.use_alignment and n_takes > 1:
         progress(10, "Alinhando takes (cross-correlacao)...")
@@ -177,6 +191,10 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
         "avg_score": round(np.mean([d["score"] for d in decisions]), 3),
     }
 
+    # Include pre-filter stats if filtering was applied
+    if prefilter_report:
+        report["prefilter"] = prefilter_report
+
     # Include normalization stats if normalization was applied
     if norm_stats:
         report["normalization"] = norm_stats
@@ -234,6 +252,20 @@ def _run_structure_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
             min_music_duration_s=rules.trim_min_music_duration_s,
             progress_cb=progress,
         )
+
+    # ── Step 0.5: Pre-filter outlier takes ──
+    prefilter_report = None
+    if rules.prefilter_enabled:
+        from backend.engine.prefilter import prefilter_takes
+        progress(4, "Pre-filtrando takes (detectando outliers)...")
+        takes, prefilter_report = prefilter_takes(
+            takes, sr,
+            max_bpm_deviation=rules.prefilter_max_bpm_deviation,
+            max_pitch_deviation=rules.prefilter_max_pitch_deviation,
+            max_energy_deviation=rules.prefilter_max_energy_deviation,
+            progress_cb=progress,
+        )
+        n_takes = len(takes)
 
     # ── Step 1: Find the longest take as reference ──
     # (longest take most likely has the full song structure)
@@ -494,6 +526,10 @@ def _run_structure_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
             for s in sections
         ],
     }
+
+    # Include pre-filter stats if filtering was applied
+    if prefilter_report:
+        report["prefilter"] = prefilter_report
 
     # Include normalization stats if normalization was applied
     if norm_stats:
