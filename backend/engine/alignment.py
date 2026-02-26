@@ -63,10 +63,11 @@ def align_takes_xcorr(takes: List[np.ndarray], sr: int,
 
         if abs(shift) > 0:
             if shift > 0:
-                aligned_take = np.pad(take, (shift, 0))[:len(take)]
+                # Take starts later — pad front, preserve ALL end content
+                aligned_take = np.pad(take, (shift, 0))
             else:
+                # Take starts earlier — trim pre-reference content only
                 aligned_take = take[-shift:]
-                aligned_take = np.pad(aligned_take, (0, -shift))
             log.info(f"  Take {i+1}: shift = {shift} samples ({shift/sr*1000:.1f}ms)")
         else:
             aligned_take = take
@@ -74,8 +75,10 @@ def align_takes_xcorr(takes: List[np.ndarray], sr: int,
 
         aligned[i] = aligned_take
 
-    # Trim all to same length
-    min_len = min(len(t) for t in aligned)
-    aligned = [t[:min_len] for t in aligned]
+    # Pad all to MAXIMUM length — preserves full song, no content loss
+    max_len = max(len(t) for t in aligned)
+    aligned = [np.pad(t, (0, max_len - len(t))) if len(t) < max_len
+               else t for t in aligned]
+    log.info(f"  Alinhamento concluido: {max_len/sr:.1f}s preservados")
 
     return aligned

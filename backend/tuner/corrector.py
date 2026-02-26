@@ -287,7 +287,7 @@ def correct_pitch(audio: np.ndarray, sr: int, analysis: dict,
     # Step 6: Apply pitch shift per segment
     corrected = audio.copy()
     n_segments = len(segments)
-    crossfade_samples = int(sr * 0.050)  # 50ms crossfade — longer for smoother joins
+    crossfade_samples = int(sr * 0.100)  # 100ms crossfade — prevents "air blocking" artifacts
 
     corrections_cents = []
 
@@ -301,7 +301,7 @@ def correct_pitch(audio: np.ndarray, sr: int, analysis: dict,
 
         # Add margin for cleaner pitch shift — wider margin gives pyrubberband
         # more context for its overlap-add windowing
-        margin = int(sr * 0.200)  # 200ms margin
+        margin = int(sr * 0.300)  # 300ms margin (wider = fewer edge artifacts)
         seg_start = max(0, start - margin)
         seg_end = min(len(audio), end + margin)
 
@@ -309,9 +309,11 @@ def correct_pitch(audio: np.ndarray, sr: int, analysis: dict,
 
         try:
             # pyrubberband uses Rubber Band Library — time-domain pitch shift
-            # with formant preservation (same engine as Pro Tools Elastic Audio)
+            # -F flag = formant preservation (keeps voice/instrument natural,
+            # prevents "nasal" or "airy" artifacts when pitch changes)
             shifted = pyrb.pitch_shift(
                 segment_audio, sr=sr, n_steps=shift_st,
+                rbargs=["--formant"],
             )
 
             # Extract the core region (without margins)
@@ -324,23 +326,28 @@ def correct_pitch(audio: np.ndarray, sr: int, analysis: dict,
             if actual_len <= 0:
                 continue
 
-            # Crossfade in
+            # Equal-power crossfade in (sin/cos curves — constant energy,
+            # prevents the 3dB dip that linear crossfades cause)
             fade_in_len = min(crossfade_samples, actual_len // 2)
             if fade_in_len > 0:
-                fade_in = np.linspace(0, 1, fade_in_len)
+                t = np.linspace(0, np.pi / 2, fade_in_len)
+                fade_in_new = np.sin(t)      # 0 → 1 (shifted audio fades in)
+                fade_in_old = np.cos(t)      # 1 → 0 (original audio fades out)
                 shifted_core[:fade_in_len] = (
-                    corrected[start:start + fade_in_len] * (1 - fade_in) +
-                    shifted_core[:fade_in_len] * fade_in
+                    corrected[start:start + fade_in_len] * fade_in_old +
+                    shifted_core[:fade_in_len] * fade_in_new
                 )
 
-            # Crossfade out
+            # Equal-power crossfade out
             fade_out_len = min(crossfade_samples, actual_len // 2)
             if fade_out_len > 0:
-                fade_out = np.linspace(1, 0, fade_out_len)
+                t = np.linspace(0, np.pi / 2, fade_out_len)
+                fade_out_new = np.cos(t)     # 1 → 0 (shifted audio fades out)
+                fade_out_old = np.sin(t)     # 0 → 1 (original audio fades back in)
                 end_pos = start + actual_len
                 shifted_core[-fade_out_len:] = (
-                    corrected[end_pos - fade_out_len:end_pos] * (1 - fade_out) +
-                    shifted_core[-fade_out_len:] * fade_out
+                    corrected[end_pos - fade_out_len:end_pos] * fade_out_old +
+                    shifted_core[-fade_out_len:] * fade_out_new
                 )
 
             corrected[start:start + actual_len] = shifted_core[:actual_len]

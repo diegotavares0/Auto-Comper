@@ -75,20 +75,8 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
         )
         n_takes = len(takes)
 
-    # Phase 0: Quick rank BEFORE alignment (to find the best reference)
-    progress(10, "Ranqueamento rapido para referencia de alinhamento...")
-    quick_ranking = rank_takes(takes, sr, rules)
-    best_ref_idx = quick_ranking[0].take_idx
-    log.info(f"  Melhor take para referencia: Take {best_ref_idx + 1} "
-             f"(score: {quick_ranking[0].overall:.3f})")
-
-    # Phase 0.5: Align to best take (not Take 0!)
-    if rules.use_alignment and n_takes > 1:
-        progress(12, f"Alinhando takes a Take {best_ref_idx + 1}...")
-        takes = align_takes_xcorr(takes, sr, rules.max_shift_ms,
-                                  reference_idx=best_ref_idx)
-
-    # Filter outlier-short takes
+    # Phase 0: Filter outlier-short takes (before alignment to avoid
+    # padding noise from short takes affecting alignment quality)
     lengths = [len(t) for t in takes]
     median_len = sorted(lengths)[len(lengths) // 2]
     min_acceptable = int(median_len * 0.5)
@@ -112,9 +100,25 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
 
     takes = filtered_takes
     n_takes = len(takes)
-    min_len = min(len(t) for t in takes)
-    takes = [t[:min_len] for t in takes]
-    duration = min_len / sr
+
+    # Phase 0.5: Quick rank (to find best reference for alignment)
+    progress(10, "Ranqueamento rapido para referencia de alinhamento...")
+    quick_ranking = rank_takes(takes, sr, rules)
+    best_ref_idx = quick_ranking[0].take_idx
+    log.info(f"  Melhor take para referencia: Take {best_ref_idx + 1} "
+             f"(score: {quick_ranking[0].overall:.3f})")
+
+    # Phase 1: Align to best take
+    if rules.use_alignment and n_takes > 1:
+        progress(12, f"Alinhando takes a Take {best_ref_idx + 1}...")
+        takes = align_takes_xcorr(takes, sr, rules.max_shift_ms,
+                                  reference_idx=best_ref_idx)
+
+    # Pad all takes to MAXIMUM length (preserves full song — no truncation!)
+    max_len = max(len(t) for t in takes)
+    takes = [np.pad(t, (0, max_len - len(t))) if len(t) < max_len
+             else t for t in takes]
+    duration = max_len / sr
     progress(15, f"Takes alinhados: {duration:.1f}s, {n_takes} takes"
                  f"{f' ({len(dropped)} descartados)' if dropped else ''}")
 
@@ -129,9 +133,10 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
             pitch_intensity=rules.pitch_center_intensity,
             progress_cb=progress,
         )
-        # Re-truncate to min length (time-stretch may change lengths)
-        min_len = min(len(t) for t in takes)
-        takes = [t[:min_len] for t in takes]
+        # Re-pad to max length (time-stretch may change lengths slightly)
+        max_len = max(len(t) for t in takes)
+        takes = [np.pad(t, (0, max_len - len(t))) if len(t) < max_len
+                 else t for t in takes]
 
     # Phase 1: Full rank (post-alignment — scores may change slightly)
     progress(20, "Ranqueando takes inteiros...")
