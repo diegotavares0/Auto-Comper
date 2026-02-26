@@ -477,6 +477,12 @@ const Presets = {
     // ═══════════════════════════════════════════
 
     showResult(data) {
+        // Guard: backend must return a valid filename
+        if (!data || !data.filename) {
+            this.showApplyError('Resultado sem arquivo de saida. Tente novamente.');
+            return;
+        }
+
         Utils.show(this.resultCard);
 
         const processedUrl = API.outputUrl(data.filename);
@@ -493,9 +499,13 @@ const Presets = {
             Utils.show(this.btnDownloadOrig);
         }
 
-        // Init waveforms
-        this.initWaveform('processed', processedUrl);
-        if (originalUrl) this.initWaveform('original', originalUrl);
+        // Init waveforms (with try/catch to prevent WaveSurfer crash)
+        try {
+            this.initWaveform('processed', processedUrl);
+            if (originalUrl) this.initWaveform('original', originalUrl);
+        } catch (err) {
+            console.error('WaveSurfer init failed:', err);
+        }
 
         this.switchAB('processed');
 

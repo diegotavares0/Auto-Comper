@@ -27,7 +27,7 @@ class CompRules:
 
     # Alignment
     use_alignment: bool = True
-    max_shift_ms: float = 300.0
+    max_shift_ms: float = 1000.0           # allow up to 1s offset between takes
 
     # Continuity
     switch_penalty: float = 0.15
@@ -56,11 +56,11 @@ class CompRules:
     prefilter_max_energy_deviation: float = 40.0    # % of median
 
     # Crossfade
-    crossfade_ms: float = 50.0
+    crossfade_ms: float = 150.0            # longer crossfade for smoother transitions
 
     # Output
     sample_rate: int = 48000
-    normalize_output: bool = False
+    normalize_output: bool = True           # on by default to ensure consistent volume
     target_lufs: float = -16.0
 
     def to_dict(self) -> dict:
@@ -83,15 +83,15 @@ class TunerConfig:
 
     instrument_mode: str = "voice"      # "voice", "guitar", "auto"
     correction_amount: float = 80.0     # 0-100%
-    retune_speed: float = 50.0          # 0-100
+    retune_speed: float = 85.0          # 0-100 (85 = fast but natural)
     root_note: str = "auto"             # note name or "auto"
     scale_type: str = "major"
     preserve_vibrato: bool = True
-    vibrato_threshold_hz: float = 4.0
+    vibrato_threshold_hz: float = 3.5   # lower to catch guitar vibrato (~3-5Hz)
     vibrato_max_depth_cents: float = 80.0
-    pitch_confidence_threshold: float = 0.6
+    pitch_confidence_threshold: float = 0.75  # only correct high-confidence frames
     sample_rate: int = 48000
-    hop_ms: float = 10.0
+    hop_ms: float = 5.0                 # 5ms → 200 pitch estimates/sec for guitar bends
     normalize_output: bool = True
     target_lufs: float = -16.0
 

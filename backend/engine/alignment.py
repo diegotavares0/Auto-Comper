@@ -13,26 +13,48 @@ log = logging.getLogger("comper")
 
 
 def align_takes_xcorr(takes: List[np.ndarray], sr: int,
-                      max_shift_ms: float) -> List[np.ndarray]:
+                      max_shift_ms: float,
+                      reference_idx: int = 0) -> List[np.ndarray]:
     """
     Align takes using cross-correlation (global time shift only).
-    Uses first take as reference.
+
+    Parameters
+    ----------
+    takes : list of np.ndarray
+        Audio takes to align.
+    sr : int
+        Sample rate.
+    max_shift_ms : float
+        Maximum allowed time shift in milliseconds.
+    reference_idx : int
+        Index of the take to use as alignment reference (default 0).
+        Should be the best-ranked take for optimal results.
     """
     if len(takes) < 2:
         return takes
 
-    log.info("Alinhando takes por cross-correlacao...")
-    reference = takes[0]
-    max_shift = int(sr * max_shift_ms / 1000)
-    aligned = [reference]
+    # Clamp reference_idx to valid range
+    reference_idx = max(0, min(reference_idx, len(takes) - 1))
 
-    for i, take in enumerate(takes[1:], 1):
-        # Use first 10 seconds for correlation
-        chunk_len = min(len(reference), len(take), sr * 10)
-        ref_chunk = reference[:chunk_len]
+    log.info(f"Alinhando takes por cross-correlacao (ref=Take {reference_idx + 1})...")
+    reference = takes[reference_idx]
+    max_shift = int(sr * max_shift_ms / 1000)
+
+    # Use first 10 seconds for correlation (sufficient for timing detection)
+    ref_chunk_len = min(len(reference), sr * 10)
+    ref_chunk = reference[:ref_chunk_len]
+
+    aligned = [None] * len(takes)
+    aligned[reference_idx] = reference  # reference stays unchanged
+
+    for i, take in enumerate(takes):
+        if i == reference_idx:
+            continue
+
+        chunk_len = min(ref_chunk_len, len(take))
         take_chunk = take[:chunk_len]
 
-        correlation = correlate(ref_chunk, take_chunk, mode="full")
+        correlation = correlate(ref_chunk[:chunk_len], take_chunk, mode="full")
         mid = len(correlation) // 2
         search_start = max(0, mid - max_shift)
         search_end = min(len(correlation), mid + max_shift)
@@ -50,7 +72,7 @@ def align_takes_xcorr(takes: List[np.ndarray], sr: int,
             aligned_take = take
             log.info(f"  Take {i+1}: ja alinhada")
 
-        aligned.append(aligned_take)
+        aligned[i] = aligned_take
 
     # Trim all to same length
     min_len = min(len(t) for t in aligned)

@@ -4,3 +4,4 @@ soundfile>=0.12
 librosa>=0.10
 scipy>=1.11
 gunicorn>=21.2
+pyrubberband>=0.3

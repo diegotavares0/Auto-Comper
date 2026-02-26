@@ -3,9 +3,10 @@
 
 FROM python:3.11-slim AS base
 
-# System deps for soundfile (libsndfile) and librosa (ffmpeg optional)
+# System deps: libsndfile (soundfile), rubberband-cli (pyrubberband pitch shift)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1-dev \
+    rubberband-cli \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

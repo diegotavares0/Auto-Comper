@@ -7,7 +7,7 @@ from typing import Callable, Optional
 
 import numpy as np
 from scipy import signal as scipy_signal
-import librosa
+import pyrubberband as pyrb
 
 from backend.config import TunerConfig
 from backend.utils.musical_constants import (
@@ -84,10 +84,11 @@ def _extract_vibrato(midi: np.ndarray, voiced_mask: np.ndarray,
     if not regions:
         return vibrato
 
-    # Bandpass filter for vibrato (3-9 Hz)
+    # Bandpass filter for vibrato
+    # Guitar vibrato is slower (2-6Hz) vs voice (4-8Hz), so use wide range
     nyquist = frame_rate / 2
-    low = max(3.0, config.vibrato_threshold_hz - 1.0) / nyquist
-    high = min(9.0, config.vibrato_threshold_hz + 5.0) / nyquist
+    low = max(1.5, config.vibrato_threshold_hz - 2.5) / nyquist
+    high = min(12.0, config.vibrato_threshold_hz + 8.0) / nyquist
 
     # Clamp to valid range
     low = max(0.01, min(low, 0.99))
@@ -125,7 +126,7 @@ def _extract_vibrato(midi: np.ndarray, voiced_mask: np.ndarray,
         depth = filtered.max() - filtered.min()  # in MIDI units
         depth_cents = depth * 100
 
-        if 5 < depth_cents < config.vibrato_max_depth_cents:
+        if 2 < depth_cents < config.vibrato_max_depth_cents:
             # Valid vibrato — preserve it
             vibrato[start:end] = filtered
 
@@ -175,7 +176,7 @@ def _apply_retune_speed(shift_midi: np.ndarray, voiced_mask: np.ndarray,
 
 def _group_segments(shift_semitones: np.ndarray, voiced_mask: np.ndarray,
                     hop_length: int, sr: int,
-                    threshold_cents: float = 10.0) -> list:
+                    threshold_cents: float = 40.0) -> list:
     """
     Group consecutive frames with similar pitch shift into segments.
     Returns list of {start_sample, end_sample, shift_semitones}.
@@ -286,7 +287,7 @@ def correct_pitch(audio: np.ndarray, sr: int, analysis: dict,
     # Step 6: Apply pitch shift per segment
     corrected = audio.copy()
     n_segments = len(segments)
-    crossfade_samples = int(sr * 0.010)  # 10ms crossfade
+    crossfade_samples = int(sr * 0.050)  # 50ms crossfade — longer for smoother joins
 
     corrections_cents = []
 
@@ -298,15 +299,18 @@ def correct_pitch(audio: np.ndarray, sr: int, analysis: dict,
         if abs(shift_st) < 0.005 or end <= start:
             continue
 
-        # Add margin for cleaner pitch shift
-        margin = int(sr * 0.05)  # 50ms margin
+        # Add margin for cleaner pitch shift — wider margin gives pyrubberband
+        # more context for its overlap-add windowing
+        margin = int(sr * 0.200)  # 200ms margin
         seg_start = max(0, start - margin)
         seg_end = min(len(audio), end + margin)
 
         segment_audio = audio[seg_start:seg_end]
 
         try:
-            shifted = librosa.effects.pitch_shift(
+            # pyrubberband uses Rubber Band Library — time-domain pitch shift
+            # with formant preservation (same engine as Pro Tools Elastic Audio)
+            shifted = pyrb.pitch_shift(
                 segment_audio, sr=sr, n_steps=shift_st,
             )
 

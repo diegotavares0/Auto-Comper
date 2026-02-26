@@ -75,10 +75,18 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
         )
         n_takes = len(takes)
 
-    # Phase 0: Align
+    # Phase 0: Quick rank BEFORE alignment (to find the best reference)
+    progress(10, "Ranqueamento rapido para referencia de alinhamento...")
+    quick_ranking = rank_takes(takes, sr, rules)
+    best_ref_idx = quick_ranking[0].take_idx
+    log.info(f"  Melhor take para referencia: Take {best_ref_idx + 1} "
+             f"(score: {quick_ranking[0].overall:.3f})")
+
+    # Phase 0.5: Align to best take (not Take 0!)
     if rules.use_alignment and n_takes > 1:
-        progress(10, "Alinhando takes (cross-correlacao)...")
-        takes = align_takes_xcorr(takes, sr, rules.max_shift_ms)
+        progress(12, f"Alinhando takes a Take {best_ref_idx + 1}...")
+        takes = align_takes_xcorr(takes, sr, rules.max_shift_ms,
+                                  reference_idx=best_ref_idx)
 
     # Filter outlier-short takes
     lengths = [len(t) for t in takes]
@@ -110,7 +118,7 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
     progress(15, f"Takes alinhados: {duration:.1f}s, {n_takes} takes"
                  f"{f' ({len(dropped)} descartados)' if dropped else ''}")
 
-    # Phase 0.5: Tempo/Pitch Normalization (if enabled)
+    # Phase 0.7: Tempo/Pitch Normalization (if enabled)
     norm_stats = None
     if rules.tempo_normalize_intensity > 0 or rules.pitch_center_intensity > 0:
         from backend.engine.normalizer import normalize_takes
@@ -125,7 +133,7 @@ def _run_classic_comp(takes: List[np.ndarray], sr: int, rules: CompRules,
         min_len = min(len(t) for t in takes)
         takes = [t[:min_len] for t in takes]
 
-    # Phase 1: Rank takes
+    # Phase 1: Full rank (post-alignment — scores may change slightly)
     progress(20, "Ranqueando takes inteiros...")
     take_ranking = rank_takes(takes, sr, rules)
     best_take = take_ranking[0]
